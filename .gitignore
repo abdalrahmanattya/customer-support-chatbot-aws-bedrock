@@ -3,6 +3,7 @@ AGENTS.md
 AGY.md
 CLAUDE.md
 GEMINI.md
+scripts/test-context-resume.sh
 
 # Operating System & Editor Artifacts
 .DS_Store

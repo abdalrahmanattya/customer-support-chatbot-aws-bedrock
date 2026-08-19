@@ -1,0 +1,203 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Customer Support Chatbot - Bug Report Storage & Tool Stack (DynamoDB, Lambda, IAM)
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+    Description: Deployment stage/environment name.
+
+Resources:
+  BugReportsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "support-bug-reports-${EnvironmentName}-${AWS::Region}"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: ticketId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: ticketId
+          KeyType: HASH
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      SSESpecification:
+        SSEEnabled: true
+      Tags:
+        - Key: Project
+          Value: CustomerSupportChatbot
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "support-bug-report-lambda-role-${EnvironmentName}-${AWS::Region}"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: DynamoDBAccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:PutItem
+                  - dynamodb:GetItem
+                Resource: !GetAtt BugReportsTable.Arn
+      Tags:
+        - Key: Project
+          Value: CustomerSupportChatbot
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  CreateBugReportFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "support-create-bug-report-${EnvironmentName}"
+      Runtime: python3.12
+      Handler: index.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 30
+      MemorySize: 256
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref BugReportsTable
+          ENVIRONMENT: !Ref EnvironmentName
+      Code:
+        ZipFile: |
+          import json
+          import os
+          import uuid
+          from datetime import datetime, timezone
+          import boto3
+
+          dynamodb = boto3.resource("dynamodb")
+          table = dynamodb.Table(os.environ.get("TABLE_NAME", ""))
+
+          REQUIRED_FIELDS = ("description", "stepsToReproduce", "environment")
+
+          def lambda_handler(event, context):
+              print("Received event:", json.dumps(event, default=str))
+
+              # Handle direct dict payload or Bedrock Agent / Tool payload format
+              body = {}
+              if "parameters" in event:
+                  params = event.get("parameters") or []
+                  body = {
+                      p.get("name"): p.get("value")
+                      for p in params
+                      if isinstance(p, dict) and p.get("name") is not None
+                  }
+              elif "requestBody" in event:
+                  rb = event.get("requestBody", {})
+                  content = rb.get("content", {}).get("application/json", {})
+                  body = content.get("properties", {})
+              else:
+                  body = event
+
+              description = str(body.get("description") or "").strip()
+              steps = str(body.get("stepsToReproduce") or "").strip()
+              environment = str(body.get("environment") or "").strip()
+
+              if not description:
+                  return _format_response(event, {"status": "ERROR", "error": "Missing required field: description"}, 400)
+
+              ticket_id = f"BUG-{uuid.uuid4().hex[:8].upper()}"
+              now_iso = datetime.now(timezone.utc).isoformat()
+              
+              item = {
+                  "ticketId": ticket_id,
+                  "description": description,
+                  "stepsToReproduce": steps or "Not provided",
+                  "environment": environment or "Not provided",
+                  "status": "OPEN",
+                  "createdAt": now_iso,
+                  "updatedAt": now_iso,
+              }
+
+              table.put_item(Item=item)
+
+              result = {
+                  "status": "SUCCESS",
+                  "ticketId": ticket_id,
+                  "message": f"Bug report ticket {ticket_id} created successfully.",
+                  "createdAt": now_iso,
+              }
+              return _format_response(event, result, 200)
+
+          def _format_response(event, data, status_code=200):
+              # Check if called via Bedrock Agent action group
+              if "actionGroup" in event or "messageVersion" in event:
+                  return {
+                      "messageVersion": "1.0",
+                      "response": {
+                          "actionGroup": event.get("actionGroup", "create_bug_report"),
+                          "function": event.get("function", "create_bug_report"),
+                          "functionResponse": {
+                              "responseBody": {
+                                  "TEXT": {
+                                      "body": json.dumps(data)
+                                  }
+                              }
+                          },
+                      },
+                  }
+              # Standard direct / API invocation response
+              return {
+                  "statusCode": status_code,
+                  "body": json.dumps(data) if isinstance(data, dict) else str(data)
+              }
+
+      Tags:
+        - Key: Project
+          Value: CustomerSupportChatbot
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  BedrockInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt CreateBugReportFunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: bedrock.amazonaws.com
+
+Outputs:
+  BugReportsTableName:
+    Description: Name of the BugReports DynamoDB table
+    Value: !Ref BugReportsTable
+    Export:
+      Name: !Sub "${AWS::StackName}-BugReportsTableName"
+
+  BugReportsTableArn:
+    Description: ARN of the BugReports DynamoDB table
+    Value: !GetAtt BugReportsTable.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-BugReportsTableArn"
+
+  CreateBugReportFunctionName:
+    Description: Name of the create-bug-report Lambda function
+    Value: !Ref CreateBugReportFunction
+    Export:
+      Name: !Sub "${AWS::StackName}-CreateBugReportFunctionName"
+
+  CreateBugReportFunctionArn:
+    Description: ARN of the create-bug-report Lambda function
+    Value: !GetAtt CreateBugReportFunction.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-CreateBugReportFunctionArn"
+
+  LambdaExecutionRoleArn:
+    Description: ARN of the Lambda execution IAM role
+    Value: !GetAtt LambdaExecutionRole.Arn

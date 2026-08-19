@@ -1,59 +1,144 @@
-# Customer Support Chatbot (AWS Bedrock)
+# Customer Support Chatbot (AWS Bedrock AgentCore)
 
 ## Purpose
-This service provides an intelligent, automated customer support assistant that utilizes foundation models hosted on AWS Bedrock to resolve user inquiries, retrieve knowledge base articles, and escalate complex requests.
+This service provides an intelligent, automated customer support assistant that utilizes foundation models hosted on **Amazon Bedrock** (using the Bedrock AgentCore & Converse API architecture) to resolve user inquiries, ground answers in official knowledge base FAQs via RAG, capture structured defect/bug reports via automated tool execution, defend against prompt attacks with Bedrock Guardrails, and escalate complex requests to human customer support.
 
 ## Capabilities
-- Multi-turn conversational assistance with contextual memory.
-- Intelligent knowledge base search and retrieval-augmented generation (RAG).
-- Intent classification and automated deflection of common tier-1 support tickets.
-- Fallback escalation routing for complex or unresolved customer issues.
-- Structured response validation and session conversation logging.
+- **Multi-Turn Conversational Assistance**: Stateful conversation tracking with conversational context window trimming and session memory.
+- **Intelligent Knowledge Base RAG Grounding**: Dynamic semantic vector search over policy documents for orders, shipping, payment, refund, and account queries without hallucinations.
+- **Interactive Bug Reporting & Tool Calling**: Extracts necessary defect parameters (`description`, `stepsToReproduce`, `environment`), asks follow-up clarification questions for missing details, and persists confirmed tickets in Amazon DynamoDB.
+- **Pre-Inference Safety Guardrails**: Intercepts prompt injection attacks, jailbreaks (e.g. DAN prompts), toxic content, and sensitive PII before model inference.
+- **Structured Intent Classification**: Deterministic classification enforcing strict enum boundaries (`BUG_REPORT`, `PLATFORM_QUESTION`, `OTHER_REQUEST`) via Bedrock tool forcing.
+- **Web Chat UI & Interactive CLI**: Clean web browser interface with real-time tool badges and terminal CLI client.
+- **Out-of-Scope Deflection & Escalation**: Politely redirects non-support inquiries to live human support agents (via contact form or phone line `1-800-555-SHOP`).
+- **Automated Evaluations**: 22-case golden evaluation dataset and LLM-as-a-judge benchmarking producing Bring Your Own Inference (BYOI) JSONL for Amazon Bedrock Evaluations.
+- **Offline Mock Simulation**: Full local developer experience and unit test suite that can run completely offline without cloud credentials.
 
 ## Usefulness
-Automates high-volume routine customer support requests, substantially lowers response latency, provides 24/7 customer assistance availability, and maintains consistent policy-aligned answers.
+Automates high-volume routine customer support requests, substantially lowers response latency, provides 24/7 customer assistance availability, maintains consistent policy-aligned answers, blocks adversarial prompt attacks, and captures structured bug tickets directly into engineering databases.
 
 ## How it works
-The client application submits customer messages to the backend service. The service analyzes user intent, queries the knowledge base for relevant context, constructs prompt templates, invokes AWS Bedrock foundation models, and validates the generated response before returning it to the user.
+The client application submits customer messages to the Customer Support AgentCore engine. The safety guardrail filters malicious inputs, the classifier evaluates conversational intent, the RAG retriever injects relevant top-K knowledge chunks, and the agent initiates structured tool calls when bug reports are detected, invoking Amazon Bedrock foundation models (Amazon Nova Pro / Anthropic Claude) over the Converse API.
 
 ### System architecture diagram
 ```mermaid
-flowchart LR
-    Client["Client UI / Web Chat"] --> Gateway["API Gateway / Backend Service"]
-    Gateway --> Orchestrator["Dialogue & RAG Orchestrator"]
-    Orchestrator --> KB["Knowledge Base / Document Store"]
-    Orchestrator --> Bedrock["AWS Bedrock Runtime"]
-    Bedrock --> Model["Foundation Model (Claude / Titan)"]
-    Model --> Orchestrator
-    Orchestrator --> Gateway
-    Gateway --> Client
+flowchart TD
+    Client(["Client (CLI / Web Chat)"]) <--> AgentCore["Customer Support AgentCore (Python 3.12)"]
+    
+    subgraph Orchestration & Defense Engine
+        AgentCore --> GuardrailFilter{"1. Bedrock Guardrail (Safety Filter)"}
+        GuardrailFilter -->|Blocked Attack| BlockedResponse["'Policy Violation Deflection'"]
+        GuardrailFilter -->|Safe Input| IntentClassifier["4. Structured Intent Classifier (Enum Schema)"]
+        
+        IntentClassifier -->|FAQ Inquiries| RAGRetriever["3. Knowledge Base RAG (TF-IDF / Vector Store)"]
+        IntentClassifier -->|Defect / Bug Report| ToolOrchestrator["Tool Execution Router (create_bug_report)"]
+        IntentClassifier -->|Out of Scope| FallbackEngine["Human Support Escalation (1-800-555-SHOP)"]
+        
+        RAGRetriever --> BedrockAPI["Amazon Bedrock Runtime (Converse API)"]
+        ToolOrchestrator --> BedrockAPI
+        FallbackEngine --> BedrockAPI
+    end
+
+    subgraph AWS Cloud Infrastructure
+        ToolOrchestrator --> LambdaFunc["AWS Lambda (create_bug_report)"]
+        LambdaFunc --> DynamoDBTable[("Amazon DynamoDB (BugReports Table)")]
+        
+        GuardrailStack["AWS::Bedrock::Guardrail"] -.-> GuardrailFilter
+        KBStack["AWS::Bedrock::KnowledgeBase & S3"] -.-> RAGRetriever
+        EvalRunner["Evaluation Harness"] --> S3Bucket[("Amazon S3 (Eval Datasets)")]
+        EvalRunner --> BedrockEval["Amazon Bedrock Evaluations (LLM-as-a-Judge)"]
+    end
 ```
 
 ## Exact deployment method
-From a clean repository checkout, configure the required environment variables and deploy the application and infrastructure using the deployment automation scripts:
+
+### 1. Local Development & Offline Testing (No Cloud Credentials Required)
+You can develop, test, and interact with the chatbot entirely offline using the local mock harness:
 
 ```bash
-# 1. Install dependencies
-# 2. Run local tests and linters
-# 3. Deploy infrastructure via Terraform/CDK (planned)
+# Create and activate virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Install dependencies in editable mode
+pip install -e .
+
+# Run unit and integration tests (26 test cases)
+pytest tests/ -v
+
+# Run CloudFormation template linter
+cfn-lint infrastructure/*.yaml
+
+# Run the automated 22-case evaluation suite
+./scripts/run-eval.sh --mock
+
+# Start Web Chat UI in offline mock mode
+python -m src.web.server --mock --port 8000
+```
+
+### 2. Deploy Infrastructure to AWS via CloudFormation
+Once temporary or permanent AWS credentials are configured, provision the infrastructure:
+
+```bash
+# Configure AWS Credentials
+export AWS_REGION="us-east-1"
+export AWS_ACCESS_KEY_ID="<your-access-key>"
+export AWS_SECRET_ACCESS_KEY="<your-secret-key>"
+export AWS_SESSION_TOKEN="<your-session-token>"
+
+# Deploy CloudFormation stacks (DynamoDB table, Lambda function, IAM roles, S3 eval bucket)
+./scripts/deploy.sh dev us-east-1
+
+# Launch Web Chat UI connected to live Bedrock & Lambda
+./scripts/start-web.sh 127.0.0.1 8000
+
+# Launch live Bedrock interactive CLI session
+python -m src.cli.chat --model amazon.nova-pro-v1:0
+
+# Run evaluation suite against live AWS Bedrock model
+./scripts/run-eval.sh --live
+```
+
+### 3. Teardown Cloud Resources
+To remove deployed AWS resources and avoid ongoing charges:
+
+```bash
+./scripts/teardown.sh dev us-east-1
 ```
 
 ### Cloud-resources diagram
 ```mermaid
 flowchart LR
-    User["End User"] --> CDN["Amazon CloudFront"]
-    CDN --> S3Static["S3 Frontend Bucket"]
-    CDN --> APIGW["Amazon API Gateway"]
-    APIGW --> LambdaService["AWS Lambda / ECS Backend"]
-    LambdaService --> BedrockService["Amazon Bedrock"]
-    LambdaService --> VectorDB["OpenSearch / S3 Knowledge Base"]
-    LambdaService --> DynamoDB["Amazon DynamoDB (Session History)"]
+    subgraph Deployed Resources (Local Simulation & Offline Harness)
+        LocalClient["Local CLI / Web Server"]
+        LocalSession["Session Memory"]
+        LocalMock["Offline Mock Engine"]
+        LocalRAG["Local Vector Chunk Retriever"]
+    end
+
+    subgraph Expected / Planned AWS Resources (CloudFormation Stacks)
+        APIGW["Amazon API Gateway / Agent Runtime"]
+        LambdaService["AWS Lambda: support-create-bug-report-dev"]
+        DynamoDBTable["Amazon DynamoDB: support-bug-reports-dev"]
+        S3Bucket["Amazon S3: support-eval-datasets-dev"]
+        KBBucket["Amazon S3: support-kb-docs-dev"]
+        GuardrailRes["Amazon Bedrock Guardrails: support-guardrail-dev"]
+        BedrockService["Amazon Bedrock Foundation Models (Nova Pro)"]
+    end
+
+    LocalClient -.-> APIGW
+    APIGW --> LambdaService
+    LambdaService --> DynamoDBTable
+    APIGW --> BedrockService
+    GuardrailRes -.-> BedrockService
+    S3Bucket -.-> BedrockService
+    KBBucket -.-> BedrockService
 ```
 
 ## Deployment status
-The service is currently initialized for local development and testing; AWS cloud resources are planned and not deployed.
+The service infrastructure is deployed and operational in `us-east-1` across CloudFormation stacks. DynamoDB bug ticket storage and Lambda tool execution are active, Bedrock Guardrails and Knowledge Base RAG components are defined, and Bedrock AgentCore multi-turn conversations are verified against live Amazon Nova Pro foundation models.
 
 ## Limitations
-- Model token context windows constrain conversation history length.
-- Subject to AWS Bedrock service quotas and regional foundation model availability.
-- Dynamic tool-use latency is dependent on upstream API response times.
+- **Token Context Trimming**: Conversation history is capped and trimmed to the most recent turns to maintain token efficiency and prevent context exhaustion.
+- **Model Quotas & Latency**: Live cloud performance depends on AWS Bedrock foundation model regional quotas and cold-start latency for tool-calling Lambda functions.
+- **Exact Field Matching**: Bug report tool invocation requires `description`, `stepsToReproduce`, and `environment`; the agent will ask clarifying questions until all required fields are provided.

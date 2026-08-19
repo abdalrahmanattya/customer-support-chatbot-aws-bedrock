@@ -1,0 +1,80 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Customer Support Chatbot - Amazon Bedrock Knowledge Base & Vector Store Stack
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+    Description: Deployment stage/environment name.
+
+  EmbeddingModelArn:
+    Type: String
+    Default: arn:aws:bedrock:us-east-1::foundation-model/amazon.titan-embed-text-v1
+    Description: Bedrock embedding foundation model ARN for vector generation.
+
+Resources:
+  KnowledgeDocumentsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "support-kb-docs-${EnvironmentName}-${AWS::AccountId}-${AWS::Region}"
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+      Tags:
+        - Key: Project
+          Value: CustomerSupportChatbot
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  BedrockKBRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "support-bedrock-kb-role-${EnvironmentName}-${AWS::Region}"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: bedrock.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: BedrockKBAccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:ListBucket
+                Resource:
+                  - !GetAtt KnowledgeDocumentsBucket.Arn
+                  - !Sub "${KnowledgeDocumentsBucket.Arn}/*"
+              - Effect: Allow
+                Action:
+                  - bedrock:InvokeModel
+                Resource: !Ref EmbeddingModelArn
+
+Outputs:
+  KnowledgeDocumentsBucketName:
+    Description: S3 Bucket for storing knowledge base documents
+    Value: !Ref KnowledgeDocumentsBucket
+    Export:
+      Name: !Sub "${AWS::StackName}-KnowledgeBucketName"
+
+  BedrockKBRoleArn:
+    Description: IAM Role ARN for Amazon Bedrock Knowledge Base
+    Value: !GetAtt BedrockKBRole.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-KBRoleArn"

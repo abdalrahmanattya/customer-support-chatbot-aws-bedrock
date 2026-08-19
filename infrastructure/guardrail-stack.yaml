@@ -1,0 +1,85 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Customer Support Chatbot - Amazon Bedrock Guardrail & Safety Defense Stack
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+    Description: Deployment stage/environment name.
+
+Resources:
+  CustomerSupportGuardrail:
+    Type: AWS::Bedrock::Guardrail
+    Properties:
+      Name: !Sub "support-guardrail-${EnvironmentName}"
+      Description: "Safety guardrail blocking harmful content, prompt injections, and sensitive PII"
+      BlockedInputMessaging: "I apologize, but I cannot process this request because it violates our safety and store security policies. If you have an inquiry regarding orders, returns, or bugs, please let me know."
+      BlockedOutputsMessaging: "I apologize, but I cannot provide this response in accordance with our safety policies."
+      ContentPolicyConfig:
+        FiltersConfig:
+          - Type: HATE
+            InputStrength: HIGH
+            OutputStrength: HIGH
+          - Type: INSULTS
+            InputStrength: HIGH
+            OutputStrength: HIGH
+          - Type: SEXUAL
+            InputStrength: HIGH
+            OutputStrength: HIGH
+          - Type: VIOLENCE
+            InputStrength: HIGH
+            OutputStrength: HIGH
+          - Type: MISCONDUCT
+            InputStrength: HIGH
+            OutputStrength: HIGH
+          - Type: PROMPT_ATTACK
+            InputStrength: HIGH
+            OutputStrength: NONE
+      ContextualGroundingPolicyConfig:
+        FiltersConfig:
+          - Type: GROUNDING
+            Threshold: 0.7
+          - Type: RELEVANCE
+            Threshold: 0.7
+      SensitiveInformationPolicyConfig:
+        PiiEntitiesConfig:
+          - Type: CREDIT_DEBIT_CARD_NUMBER
+            Action: BLOCK
+          - Type: US_SOCIAL_SECURITY_NUMBER
+            Action: BLOCK
+          - Type: PASSWORD
+            Action: BLOCK
+      Tags:
+        - Key: Project
+          Value: CustomerSupportChatbot
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  CustomerSupportGuardrailVersion:
+    Type: AWS::Bedrock::GuardrailVersion
+    Properties:
+      GuardrailIdentifier: !GetAtt CustomerSupportGuardrail.GuardrailId
+      Description: !Sub "Guardrail version for ${EnvironmentName}"
+
+Outputs:
+  GuardrailId:
+    Description: Identifier of the Bedrock Guardrail
+    Value: !GetAtt CustomerSupportGuardrail.GuardrailId
+    Export:
+      Name: !Sub "${AWS::StackName}-GuardrailId"
+
+  GuardrailArn:
+    Description: ARN of the Bedrock Guardrail
+    Value: !GetAtt CustomerSupportGuardrail.GuardrailArn
+    Export:
+      Name: !Sub "${AWS::StackName}-GuardrailArn"
+
+  GuardrailVersion:
+    Description: Version of the Bedrock Guardrail
+    Value: !GetAtt CustomerSupportGuardrailVersion.Version
+    Export:
+      Name: !Sub "${AWS::StackName}-GuardrailVersion"
