@@ -4,6 +4,7 @@ AGY.md
 CLAUDE.md
 GEMINI.md
 scripts/test-context-resume.sh
+project-starter/
 
 # Operating System & Editor Artifacts
 .DS_Store
