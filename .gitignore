@@ -5,6 +5,7 @@ CLAUDE.md
 GEMINI.md
 CHANGELOG.md
 scripts/test-context-resume.sh
+scripts/refresh-credentials.sh
 project-starter/
 
 # Operating System & Editor Artifacts
