@@ -12,7 +12,7 @@ This service provides an intelligent, automated customer support assistant that 
 - **Web Chat UI & Interactive CLI**: Clean web browser interface with real-time tool badges and terminal CLI client.
 - **Out-of-Scope Deflection & Escalation**: Politely redirects non-support inquiries to live human support agents (via contact form or phone line `1-800-555-SHOP`).
 - **Automated Evaluations**: 22-case golden evaluation dataset and LLM-as-a-judge benchmarking producing Bring Your Own Inference (BYOI) JSONL for Amazon Bedrock Evaluations.
-- **Offline Mock Simulation**: Full local developer experience and unit test suite that can run completely offline without cloud credentials.
+- **Offline Mock Simulation**: Full local developer experience and unit test suite (26 tests) that can run completely offline without cloud credentials.
 
 ## Usefulness
 Automates high-volume routine customer support requests, substantially lowers response latency, provides 24/7 customer assistance availability, maintains consistent policy-aligned answers, blocks adversarial prompt attacks, and captures structured bug tickets directly into engineering databases.
@@ -23,11 +23,11 @@ The client application submits customer messages to the Customer Support AgentCo
 ### System architecture diagram
 ```mermaid
 flowchart TD
-    Client(["Client (CLI / Web Chat)"]) <--> AgentCore["Customer Support AgentCore (Python 3.12)"]
+    Client["Client: CLI / Web Chat"] <--> AgentCore["Customer Support AgentCore (Python 3.12)"]
     
-    subgraph Orchestration & Defense Engine
+    subgraph Engine["Orchestration and Defense Engine"]
         AgentCore --> GuardrailFilter{"1. Bedrock Guardrail (Safety Filter)"}
-        GuardrailFilter -->|Blocked Attack| BlockedResponse["'Policy Violation Deflection'"]
+        GuardrailFilter -->|Blocked Attack| BlockedResponse["Policy Violation Deflection"]
         GuardrailFilter -->|Safe Input| IntentClassifier["4. Structured Intent Classifier (Enum Schema)"]
         
         IntentClassifier -->|FAQ Inquiries| RAGRetriever["3. Knowledge Base RAG (TF-IDF / Vector Store)"]
@@ -39,14 +39,14 @@ flowchart TD
         FallbackEngine --> BedrockAPI
     end
 
-    subgraph AWS Cloud Infrastructure
-        ToolOrchestrator --> LambdaFunc["AWS Lambda (create_bug_report)"]
-        LambdaFunc --> DynamoDBTable[("Amazon DynamoDB (BugReports Table)")]
+    subgraph AWS_Cloud["AWS Cloud Infrastructure"]
+        ToolOrchestrator --> LambdaFunc["AWS Lambda: create_bug_report"]
+        LambdaFunc --> DynamoDBTable[("Amazon DynamoDB: BugReports Table")]
         
-        GuardrailStack["AWS::Bedrock::Guardrail"] -.-> GuardrailFilter
-        KBStack["AWS::Bedrock::KnowledgeBase & S3"] -.-> RAGRetriever
-        EvalRunner["Evaluation Harness"] --> S3Bucket[("Amazon S3 (Eval Datasets)")]
-        EvalRunner --> BedrockEval["Amazon Bedrock Evaluations (LLM-as-a-Judge)"]
+        GuardrailStack["Bedrock Guardrails"] -.-> GuardrailFilter
+        KBStack["Bedrock Knowledge Base and S3"] -.-> RAGRetriever
+        EvalRunner["Evaluation Harness"] --> S3Bucket[("Amazon S3: Eval Datasets")]
+        EvalRunner --> BedrockEval["Amazon Bedrock Evaluations"]
     end
 ```
 
@@ -109,19 +109,19 @@ To remove deployed AWS resources and avoid ongoing charges:
 ### Cloud-resources diagram
 ```mermaid
 flowchart LR
-    subgraph Deployed Resources (Local Simulation & Offline Harness)
+    subgraph Deployed_Local["Deployed Resources: Local Simulation and Offline Harness"]
         LocalClient["Local CLI / Web Server"]
         LocalSession["Session Memory"]
         LocalMock["Offline Mock Engine"]
         LocalRAG["Local Vector Chunk Retriever"]
     end
 
-    subgraph Expected / Planned AWS Resources (CloudFormation Stacks)
+    subgraph Planned_Cloud["AWS Cloud Resources: CloudFormation Stacks"]
         APIGW["Amazon API Gateway / Agent Runtime"]
         LambdaService["AWS Lambda: support-create-bug-report-dev"]
-        DynamoDBTable["Amazon DynamoDB: support-bug-reports-dev"]
-        S3Bucket["Amazon S3: support-eval-datasets-dev"]
-        KBBucket["Amazon S3: support-kb-docs-dev"]
+        DynamoDBTable[("Amazon DynamoDB: support-bug-reports-dev")]
+        S3Bucket[("Amazon S3: support-eval-datasets-dev")]
+        KBBucket[("Amazon S3: support-kb-docs-dev")]
         GuardrailRes["Amazon Bedrock Guardrails: support-guardrail-dev"]
         BedrockService["Amazon Bedrock Foundation Models (Nova Pro)"]
     end
