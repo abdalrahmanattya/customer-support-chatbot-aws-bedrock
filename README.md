@@ -136,7 +136,7 @@ flowchart LR
 ```
 
 ## Deployment status
-The service infrastructure is deployed and operational in `us-east-1` across CloudFormation stacks. DynamoDB bug ticket storage and Lambda tool execution are active, Bedrock Guardrails and Knowledge Base RAG components are defined, and Bedrock AgentCore multi-turn conversations are verified against live Amazon Nova Pro foundation models.
+The service infrastructure is currently deployed in `us-east-1` across CloudFormation stacks. DynamoDB bug ticket storage (`support-bug-reports-dev-us-east-1`) and Lambda tool execution (`support-create-bug-report-dev`) are deployed and active, while advanced autonomous multi-agent hosting stacks remain planned for future expansions.
 
 ## Limitations
 - **Token Context Trimming**: Conversation history is capped and trimmed to the most recent turns to maintain token efficiency and prevent context exhaustion.
