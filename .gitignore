@@ -5,6 +5,7 @@ CLAUDE.md
 GEMINI.md
 CHANGELOG.md
 docs/
+Evidence/
 scripts/test-context-resume.sh
 scripts/refresh-credentials.sh
 project-starter/
