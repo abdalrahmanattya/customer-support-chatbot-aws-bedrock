@@ -53,7 +53,7 @@ Resources:
         SSEEnabled: true
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: false
-      Tags: &Tags
+      Tags:
         - Key: Project
           Value: customer-support-assistant
         - Key: Environment
@@ -66,7 +66,6 @@ Resources:
     Properties:
       MessageRetentionPeriod: 345600
       SqsManagedSseEnabled: true
-      Tags: *Tags
 
   ChatQueue:
     Type: AWS::SQS::Queue
@@ -77,7 +76,6 @@ Resources:
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt ChatDeadLetterQueue.Arn
         maxReceiveCount: 3
-      Tags: *Tags
 
   KnowledgeDocumentsBucket:
     Type: AWS::S3::Bucket
@@ -98,7 +96,6 @@ Resources:
           - Id: expire-demo-documents
             Status: Enabled
             ExpirationInDays: 14
-      Tags: *Tags
 
   VectorBucket:
     Type: AWS::S3Vectors::VectorBucket
@@ -106,7 +103,6 @@ Resources:
     UpdateReplacePolicy: Delete
     Properties:
       VectorBucketName: !Sub "support-${EnvironmentName}-${AWS::AccountId}-${AWS::Region}"
-      Tags: *Tags
 
   VectorIndex:
     Type: AWS::S3Vectors::Index
@@ -118,7 +114,6 @@ Resources:
       DataType: float32
       Dimension: 1024
       DistanceMetric: cosine
-      Tags: *Tags
 
   KnowledgeBaseRole:
     Type: AWS::IAM::Role
@@ -155,7 +150,6 @@ Resources:
                   - s3vectors:QueryVectors
                   - s3vectors:GetIndex
                 Resource: !GetAtt VectorIndex.IndexArn
-      Tags: *Tags
 
   VectorBucketPolicy:
     Type: AWS::S3Vectors::VectorBucketPolicy
@@ -251,7 +245,6 @@ Resources:
             Action: BLOCK
           - Type: PASSWORD
             Action: BLOCK
-      Tags: *Tags
 
   CustomerSupportGuardrailVersion:
     Type: AWS::Bedrock::GuardrailVersion
@@ -262,7 +255,7 @@ Resources:
   ApiRole:
     Type: AWS::IAM::Role
     Properties:
-      AssumeRolePolicyDocument: &LambdaTrust
+      AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
           - Effect: Allow
@@ -285,12 +278,17 @@ Resources:
               - Effect: Allow
                 Action: sqs:SendMessage
                 Resource: !GetAtt ChatQueue.Arn
-      Tags: *Tags
 
   WorkerRole:
     Type: AWS::IAM::Role
     Properties:
-      AssumeRolePolicyDocument: *LambdaTrust
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
       ManagedPolicyArns:
         - !Sub "arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
         - !Sub "arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaSQSQueueExecutionRole"
@@ -315,7 +313,6 @@ Resources:
               - Effect: Allow
                 Action: bedrock:Retrieve
                 Resource: !GetAtt KnowledgeBase.KnowledgeBaseArn
-      Tags: *Tags
 
   ApiFunction:
     Type: AWS::Lambda::Function
@@ -335,7 +332,6 @@ Resources:
           CHAT_QUEUE_URL: !Ref ChatQueue
           DAILY_CHAT_LIMIT: !Ref DailyChatLimit
           DEMO_EXPIRES_AT: !Ref DemoExpiresAt
-      Tags: *Tags
 
   WorkerFunction:
     Type: AWS::Lambda::Function
@@ -360,7 +356,6 @@ Resources:
           BEDROCK_GUARDRAIL_ID: !GetAtt CustomerSupportGuardrail.GuardrailId
           BEDROCK_GUARDRAIL_VERSION: !GetAtt CustomerSupportGuardrailVersion.Version
           KNOWLEDGE_POLICY_PATH: /var/task/knowledge/policies/store-policies.md
-      Tags: *Tags
 
   ApiFunctionLogGroup:
     Type: AWS::Logs::LogGroup
@@ -369,7 +364,6 @@ Resources:
     Properties:
       LogGroupName: !Sub "/aws/lambda/${ApiFunction}"
       RetentionInDays: !Ref LogRetentionDays
-      Tags: *Tags
 
   WorkerFunctionLogGroup:
     Type: AWS::Logs::LogGroup
@@ -378,7 +372,6 @@ Resources:
     Properties:
       LogGroupName: !Sub "/aws/lambda/${WorkerFunction}"
       RetentionInDays: !Ref LogRetentionDays
-      Tags: *Tags
 
   WorkerEventSource:
     Type: AWS::Lambda::EventSourceMapping
@@ -395,7 +388,6 @@ Resources:
     Properties:
       LogGroupName: !Sub "/aws/http-api/support-${EnvironmentName}"
       RetentionInDays: !Ref LogRetentionDays
-      Tags: *Tags
 
   ApiGateway:
     Type: AWS::ApiGatewayV2::Api
@@ -582,7 +574,6 @@ Resources:
         BlockPublicPolicy: true
         IgnorePublicAcls: true
         RestrictPublicBuckets: true
-      Tags: *Tags
 
   WebOriginAccessControl:
     Type: AWS::CloudFront::OriginAccessControl
@@ -625,7 +616,6 @@ Resources:
             ResponseCode: 200
             ResponsePagePath: /index.html
             ErrorCachingMinTTL: 0
-      Tags: *Tags
 
   WebBucketPolicy:
     Type: AWS::S3::BucketPolicy
@@ -659,7 +649,6 @@ Resources:
       Threshold: 1
       ComparisonOperator: GreaterThanOrEqualToThreshold
       TreatMissingData: notBreaching
-      Tags: *Tags
 
   DeadLetterAlarm:
     Type: AWS::CloudWatch::Alarm
@@ -676,7 +665,6 @@ Resources:
       Threshold: 1
       ComparisonOperator: GreaterThanOrEqualToThreshold
       TreatMissingData: notBreaching
-      Tags: *Tags
 
 Outputs:
   ApiUrl:
