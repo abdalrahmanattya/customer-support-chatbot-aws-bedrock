@@ -325,7 +325,6 @@ Resources:
         S3Key: !Ref CodeKey
       Timeout: 15
       MemorySize: 256
-      ReservedConcurrentExecutions: 5
       Environment:
         Variables:
           PRODUCT_TABLE_NAME: !Ref ProductTable
@@ -344,7 +343,6 @@ Resources:
         S3Key: !Ref CodeKey
       Timeout: 120
       MemorySize: 512
-      ReservedConcurrentExecutions: 2
       Environment:
         Variables:
           PRODUCT_TABLE_NAME: !Ref ProductTable

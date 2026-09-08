@@ -22,9 +22,10 @@ payment, identity, account, or customer data.
 
 The architecture avoids fixed-capacity databases and vector clusters. DynamoDB
 is on demand; Lambda, HTTP API, SQS, Bedrock inference, Knowledge Base retrieval,
-S3 Vectors, S3, and CloudFront charge primarily with use. Reserved concurrency,
-API throttles, a per-session chat limit, seven-day log retention, short object
-lifecycle rules, and a deployment expiry reduce runaway or forgotten-demo risk.
+S3 Vectors, S3, and CloudFront charge primarily with use. API throttles, queue
+backpressure, the account concurrency quota, a per-session chat limit, seven-day
+log retention, short object lifecycle rules, and a deployment expiry reduce
+runaway or forgotten-demo risk.
 
 Expiry is not teardown. CloudFront, stored objects/vectors, alarms, and other
 resources can continue to incur charges until the stack is deleted. Review the

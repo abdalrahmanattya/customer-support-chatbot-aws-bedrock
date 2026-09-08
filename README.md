@@ -139,8 +139,9 @@ name. See [AWS deployment and teardown](docs/operations/aws-deployment.md).
 ## Deployment status
 
 No current AWS deployment is claimed. The local product and infrastructure are
-implemented and tested. A read-only AWS inventory must reconcile resources from
-earlier work before an authorized deployment.
+implemented and tested. A read-only AWS inventory confirmed that active product
+resources are absent and identified two legacy orphans requiring a separate,
+exact cleanup approval before an authorized deployment.
 
 All resources in the cloud diagram are implemented as infrastructure code but
 remain planned, not deployed, until a live verification record states
@@ -169,6 +170,7 @@ otherwise. Planned resources are not deployment evidence.
 - [AWS deployment and teardown](docs/operations/aws-deployment.md)
 - [Security, cost, and failure controls](docs/operations/security-and-cost.md)
 - [Verification policy](docs/verification/README.md)
+- [AWS readiness review](docs/verification/aws-readiness-2026-09-08.md)
 
 ## License
 

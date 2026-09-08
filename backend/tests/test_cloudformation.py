@@ -41,7 +41,8 @@ def test_template_contains_native_grounding_and_safety_resources():
 def test_template_encodes_disposable_cost_controls():
     content = template_text()
     assert "BillingMode: PAY_PER_REQUEST" in content
-    assert "ReservedConcurrentExecutions" in content
+    assert "ThrottlingRateLimit: 5" in content
+    assert "BatchSize: 5" in content
     assert "DemoExpiresAt" in content
     assert "DeletionPolicy: Delete" in content
     assert "TimeToLiveSpecification" in content
