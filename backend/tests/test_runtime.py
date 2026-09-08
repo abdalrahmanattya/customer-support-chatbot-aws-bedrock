@@ -42,6 +42,16 @@ def test_customer_api_queues_and_reads_only_own_job(monkeypatch):
     assert json.loads(fetched["body"])["status"] == "PENDING"
 
 
+def test_health_route(monkeypatch):
+    backend = SupportBackend(MemoryProductStore(), MemoryQueue())
+    monkeypatch.setattr(runtime, "build_backend", lambda: backend)
+
+    response = runtime.api_handler(event("GET", "/health"))
+
+    assert response["statusCode"] == 200
+    assert json.loads(response["body"]) == {"status": "ok"}
+
+
 def test_operator_routes_require_verified_group(monkeypatch):
     backend = SupportBackend(MemoryProductStore(), MemoryQueue())
     monkeypatch.setattr(runtime, "build_backend", lambda: backend)

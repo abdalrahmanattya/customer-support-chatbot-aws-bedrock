@@ -2,6 +2,7 @@
 
 import logging
 import math
+import os
 import re
 from collections import Counter
 from pathlib import Path
@@ -11,8 +12,11 @@ from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_FAQ_PATH = (
-    Path(__file__).resolve().parents[4] / "knowledge" / "policies" / "store-policies.md"
+DEFAULT_FAQ_PATH = Path(
+    os.environ.get(
+        "KNOWLEDGE_POLICY_PATH",
+        Path(__file__).resolve().parents[4] / "knowledge" / "policies" / "store-policies.md",
+    )
 )
 
 

@@ -1,0 +1,55 @@
+name: AWS demo lifecycle
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: Exact lifecycle action
+        required: true
+        type: choice
+        options: [deploy, verify, teardown]
+      environment_name:
+        description: Short deployment name
+        required: true
+        default: demo
+      region:
+        description: AWS Region
+        required: true
+        default: us-east-1
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: aws-support-${{ inputs.environment_name }}
+  cancel-in-progress: false
+
+jobs:
+  lifecycle:
+    environment: aws-demo
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ inputs.region }}
+      - run: npm ci
+      - name: Deploy
+        if: inputs.action == 'deploy'
+        run: ./scripts/deploy.sh "${{ inputs.environment_name }}" "${{ inputs.region }}"
+      - name: Verify
+        if: inputs.action == 'verify'
+        run: ./scripts/verify-deployment.sh "${{ inputs.environment_name }}" "${{ inputs.region }}"
+      - name: Teardown
+        if: inputs.action == 'teardown'
+        run: ./scripts/teardown.sh "${{ inputs.environment_name }}" "${{ inputs.region }}" "customer-support-assistant-${{ inputs.environment_name }}"

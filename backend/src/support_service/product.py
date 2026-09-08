@@ -143,9 +143,16 @@ class DynamoProductStore:
         return json.loads(item["payload"]) if item else None
 
     def put(self, kind: str, record_id: str, value: dict[str, Any]) -> None:
-        self.table.put_item(
-            Item={**self._key(kind, record_id), "kind": kind, "payload": json.dumps(value, default=str)}
-        )
+        item = {
+            **self._key(kind, record_id),
+            "kind": kind,
+            "payload": json.dumps(value, default=str),
+        }
+        expires_at = value.get("expires_at")
+        if expires_at:
+            parsed = datetime.fromisoformat(str(expires_at))
+            item["expiresAtEpoch"] = int(parsed.timestamp())
+        self.table.put_item(Item=item)
 
     def list(self, kind: str) -> list[dict[str, Any]]:
         from boto3.dynamodb.conditions import Attr
@@ -166,7 +173,11 @@ class DynamoProductStore:
     def put_idempotency(self, scope: str, key: str, value: str) -> bool:
         try:
             self.table.put_item(
-                Item={**self._key("IDEMPOTENCY", f"{scope}#{key}"), "value": value},
+                Item={
+                    **self._key("IDEMPOTENCY", f"{scope}#{key}"),
+                    "value": value,
+                    "expiresAtEpoch": int((datetime.now(UTC) + timedelta(days=1)).timestamp()),
+                },
                 ConditionExpression="attribute_not_exists(pk)",
             )
             return True
@@ -206,12 +217,14 @@ class SupportBackend:
         now: Callable[[], datetime] | None = None,
         session_ttl: timedelta = timedelta(hours=2),
         daily_chat_limit: int = 30,
+        demo_expires_at: datetime | None = None,
     ) -> None:
         self.store = store
         self.queue = queue
         self.now = now or (lambda: datetime.now(UTC))
         self.session_ttl = session_ttl
         self.daily_chat_limit = daily_chat_limit
+        self.demo_expires_at = demo_expires_at
 
     @staticmethod
     def _token_hash(token: str) -> str:
@@ -219,6 +232,8 @@ class SupportBackend:
 
     def create_session(self) -> tuple[SessionRecord, str]:
         now = self.now()
+        if self.demo_expires_at and now >= self.demo_expires_at:
+            raise ProductError("This demonstration deployment has expired.", 503)
         token = secrets.token_urlsafe(32)
         session = SessionRecord(
             session_id=str(uuid.uuid4()), token_hash=self._token_hash(token),

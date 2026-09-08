@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import re
+from datetime import datetime
 from typing import Any
 
 import boto3
@@ -26,10 +27,14 @@ def build_backend() -> SupportBackend:
     region = os.environ.get("AWS_REGION", "us-east-1")
     dynamodb = boto3.resource("dynamodb", region_name=region)
     sqs = boto3.client("sqs", region_name=region)
+    expires_at = os.environ.get("DEMO_EXPIRES_AT")
     return SupportBackend(
         DynamoProductStore(dynamodb.Table(table_name)),
         SqsQueue(sqs, queue_url),
         daily_chat_limit=int(os.environ.get("DAILY_CHAT_LIMIT", "30")),
+        demo_expires_at=datetime.fromisoformat(expires_at)
+        if expires_at
+        else None,
     )
 
 
@@ -83,6 +88,8 @@ def api_handler(event: dict[str, Any], _context: Any = None) -> dict[str, Any]:
     method = event.get("requestContext", {}).get("http", {}).get("method", event.get("httpMethod", ""))
     path = event.get("rawPath", event.get("path", ""))
     try:
+        if method == "GET" and path == "/health":
+            return _response(200, {"status": "ok"})
         if method == "POST" and path == "/sessions":
             session, token = backend.create_session()
             return _response(201, {"sessionId": session.session_id, "sessionToken": token,

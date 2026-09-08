@@ -21,10 +21,12 @@ answers, controlled escalation, and operator ticket handling on AWS.
 - Persistent session, queued chat, confirmation-gated ticket, and operator API
   services with in-memory and DynamoDB adapters
 - Offline tests and a 22-case behavioral evaluation suite
-- CloudFormation templates for the existing experimental resources
+- One cohesive CloudFormation deployment for the complete serverless product
+- Manual-only GitHub OIDC deployment and exact-target teardown automation
+- Deployment expiry, request limits, throttles, short retention, and alarms
 
-The browser application is complete for local demonstration. Its complete
-disposable AWS deployment is planned and is not represented as deployed.
+The application and disposable AWS deployment path are implemented and locally
+validated. No live AWS deployment is currently claimed.
 
 ## Why it is useful
 
@@ -52,7 +54,7 @@ flowchart LR
     Ticket --> DynamoDB[(DynamoDB when configured)]
 ```
 
-## Planned cloud-resources architecture diagram
+## Implemented cloud-resources architecture (not currently deployed)
 
 ```mermaid
 flowchart TB
@@ -118,39 +120,42 @@ persistence are working.
 
 ## Exact deployment method
 
-The repository does not yet contain the complete product deployment shown
-above. Existing templates under `infra/` cover only the earlier issue-storage,
-guardrail, knowledge-document, and evaluation resources. They will be replaced
-by a cohesive disposable deployment.
-
-The intended workflow is:
+Use temporary STS credentials, verify the assumed identity, and run the cohesive
+deployment:
 
 ```bash
 source <(./scripts/refresh-credentials.sh)
+aws sts get-caller-identity
 ./scripts/deploy.sh demo us-east-1
-./scripts/teardown.sh demo us-east-1
+./scripts/verify-deployment.sh demo us-east-1
+./scripts/teardown.sh demo us-east-1 customer-support-assistant-demo
 ```
 
-These commands are not live deployment evidence until the verification report
-records a successful deploy, acceptance run, and teardown.
+The deploy command builds and uploads the Lambda artifact, provisions the stack,
+ingests the policy source, builds the React application from stack outputs, and
+publishes it behind CloudFront. The teardown command requires the exact stack
+name. See [AWS deployment and teardown](docs/operations/aws-deployment.md).
 
 ## Deployment status
 
-No current AWS deployment is claimed. The local application baseline is
-implemented and tested; the complete AWS architecture is planned. A read-only
-AWS inventory will reconcile resources from earlier work before a new
-deployment is authorized.
+No current AWS deployment is claimed. The local product and infrastructure are
+implemented and tested. A read-only AWS inventory must reconcile resources from
+earlier work before an authorized deployment.
 
-No AWS resources are currently deployed; all AWS resources in the cloud diagram are planned until a live verification record states otherwise.
+All resources in the cloud diagram are implemented as infrastructure code but
+remain planned, not deployed, until a live verification record states
+otherwise. Planned resources are not deployment evidence.
 
 ## Limitations
 
 - Local browser demo data is stored only in browser storage and is clearly
   labeled as simulation; AWS mode uses the persistent HTTP API.
-- The operator interface includes Cognito PKCE sign-in, but its user pool and
-  deployed callback configuration are planned for the infrastructure phase.
-- The current knowledge template does not provision a complete managed vector
-  knowledge base.
+- S3 Vectors, Bedrock Knowledge Bases, and model availability vary by Region;
+  the deployment currently targets `us-east-1`.
+- Deployment expiry rejects new sessions but does not delete resources; teardown
+  is still required to stop residual storage and distribution costs.
+- The stack and scripts are locally validated but have not yet completed a live
+  deploy/acceptance/teardown cycle in this modernization.
 - Offline evaluation uses deterministic simulation and is not a model-quality
   or cloud-availability measurement.
 - The fictional product does not connect to commerce, payment, email, or order
@@ -161,6 +166,8 @@ No AWS resources are currently deployed; all AWS resources in the cloud diagram 
 
 - [Architecture](docs/architecture/README.md)
 - [Local development](docs/operations/local-development.md)
+- [AWS deployment and teardown](docs/operations/aws-deployment.md)
+- [Security, cost, and failure controls](docs/operations/security-and-cost.md)
 - [Verification policy](docs/verification/README.md)
 
 ## License

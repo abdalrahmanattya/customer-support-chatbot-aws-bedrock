@@ -1,45 +1,31 @@
 #!/usr/bin/env bash
-# ==============================================================================
-# Customer Support Chatbot - AWS CloudFormation Teardown Script
-# ==============================================================================
 set -euo pipefail
 
-ENVIRONMENT="${1:-dev}"
-REGION="${2:-us-east-1}"
-TOOL_STACK_NAME="support-bug-report-stack-${ENVIRONMENT}"
-EVAL_STACK_NAME="support-eval-stack-${ENVIRONMENT}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=scripts/aws-common.sh
+source "${SCRIPT_DIR}/aws-common.sh"
+ENVIRONMENT="${1:-demo}"
+REGION="${2:-${AWS_REGION:-us-east-1}}"
+CONFIRMATION="${3:-}"
+STACK_NAME="$(stack_name "$ENVIRONMENT")"
 
-echo "=================================================================="
-echo " Tearing down Customer Support Chatbot Infrastructure"
-echo " Environment: ${ENVIRONMENT}"
-echo " Region:      ${REGION}"
-echo "=================================================================="
+require_command aws
+CALLER_ARN="$(verify_identity "$REGION")"
+[[ "$CONFIRMATION" == "$STACK_NAME" ]] || {
+  echo "Refusing teardown. Re-run with the exact stack name as argument 3:" >&2
+  echo "./scripts/teardown.sh ${ENVIRONMENT} ${REGION} ${STACK_NAME}" >&2
+  exit 2
+}
+echo "Deleting ${STACK_NAME} in ${REGION} as ${CALLER_ARN}."
+for output_key in WebBucketName KnowledgeDocumentsBucketName; do
+  bucket="$(stack_output "$STACK_NAME" "$output_key" "$REGION")"
+  aws s3 rm "s3://${bucket}" --recursive --region "$REGION" --only-show-errors
+done
+aws cloudformation delete-stack --stack-name "$STACK_NAME" --region "$REGION"
+aws cloudformation wait stack-delete-complete --stack-name "$STACK_NAME" --region "$REGION"
 
-# Check AWS CLI
-if ! command -v aws &> /dev/null; then
-    echo "Error: AWS CLI is not installed or not found in PATH." >&2
-    exit 1
-fi
-
-read -p "Are you sure you want to delete stacks ${TOOL_STACK_NAME} and ${EVAL_STACK_NAME}? (y/N) " -n 1 -r
-echo
-if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    echo "Teardown canceled."
-    exit 0
-fi
-
-# 1. Delete Evaluation Stack
-echo "--> Deleting Evaluation Stack (${EVAL_STACK_NAME})..."
-aws cloudformation delete-stack --stack-name "${EVAL_STACK_NAME}" --region "${REGION}"
-
-# 2. Delete Tool Stack
-echo "--> Deleting Tool Stack (${TOOL_STACK_NAME})..."
-aws cloudformation delete-stack --stack-name "${TOOL_STACK_NAME}" --region "${REGION}"
-
-echo "Waiting for stacks to be deleted..."
-aws cloudformation wait stack-delete-complete --stack-name "${TOOL_STACK_NAME}" --region "${REGION}" || true
-aws cloudformation wait stack-delete-complete --stack-name "${EVAL_STACK_NAME}" --region "${REGION}" || true
-
-echo "=================================================================="
-echo " Infrastructure cleanup complete."
-echo "=================================================================="
+ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
+ARTIFACT_BUCKET="support-assistant-artifacts-${ACCOUNT_ID}-${REGION}"
+aws s3 rm "s3://${ARTIFACT_BUCKET}/${ENVIRONMENT}/" --recursive \
+  --region "$REGION" --only-show-errors || true
+echo "Deleted ${STACK_NAME}; the shared artifact bucket was retained for other environments."

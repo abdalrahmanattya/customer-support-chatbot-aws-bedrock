@@ -54,6 +54,8 @@ out/
 /test-results/
 /playwright-report/
 /evals/results/
+.aws-build/
+.aws-outputs/
 *.tsbuildinfo
 /apps/web/*.js
 /apps/web/*.d.ts

@@ -55,6 +55,22 @@ def test_expired_session_is_rejected():
     assert error.value.status == 401
 
 
+def test_expired_deployment_rejects_new_sessions():
+    current = datetime(2026, 9, 8, tzinfo=UTC)
+    backend = SupportBackend(
+        MemoryProductStore(),
+        MemoryQueue(),
+        now=lambda: current,
+        demo_expires_at=current,
+    )
+
+    with pytest.raises(ProductError) as error:
+        backend.create_session()
+
+    assert error.value.status == 503
+    assert error.value.message == "This demonstration deployment has expired."
+
+
 def test_chat_is_queued_idempotently_and_limited(backend):
     session_id, token = session_credentials(backend)
     first = backend.submit_chat(session_id, token, "Return policy?", "message-1")
@@ -144,3 +160,7 @@ def test_dynamodb_adapter_persists_session_and_idempotent_ticket():
 
         assert first.ticket_id == repeated.ticket_id
         assert backend.get_ticket(session.session_id, token, first.ticket_id) == first
+        stored = table.get_item(
+            Key={"pk": f"SESSION#{session.session_id}", "sk": "RECORD"}
+        )["Item"]
+        assert stored["expiresAtEpoch"] == int(session.expires_at.timestamp())
