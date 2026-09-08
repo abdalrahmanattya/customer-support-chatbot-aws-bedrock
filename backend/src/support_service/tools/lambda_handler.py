@@ -74,7 +74,7 @@ def lambda_handler(event: dict[str, Any], context: Any = None) -> dict[str, Any]
         print(f"DynamoDB PutItem notice: {exc}")
         # In mock mode or offline testing, log notice and continue with ticket creation
         is_mock = os.environ.get("AWS_MOCK_MODE", "").lower() in ("true", "1", "yes")
-        if not is_mock and "ResourceNotFoundException" not in str(exc) and "EndpointConnectionError" not in str(exc):
+        if not is_mock:
             raise
 
     result = {

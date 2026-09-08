@@ -20,7 +20,8 @@ def test_system_prompt_structure():
     prompt = get_system_prompt()
     assert "Customer Support Assistant" in prompt
     assert "BUG REPORTS (Tool Use)" in prompt
-    assert "create_bug_report" in prompt
+    assert "issue draft" in prompt
+    assert "explicitly confirm" in prompt
     assert "stepsToReproduce" in prompt
     assert "environment" in prompt
     assert "PLATFORM & POLICY QUESTIONS" in prompt

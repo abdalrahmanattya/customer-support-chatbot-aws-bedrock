@@ -114,13 +114,14 @@ class CustomerSupportAgent:
                     "modelId": self.config.model_id,
                     "messages": session.get_messages(),
                     "system": grounded_system_prompt,
-                    "toolConfig": self.tool_config,
                     "inferenceConfig": {
                         "temperature": self.config.temperature,
                         "topP": self.config.top_p,
                         "maxTokens": self.config.max_tokens,
                     }
                 }
+                if self.config.allow_direct_ticket_creation:
+                    converse_kwargs["toolConfig"] = self.tool_config
                 if self.config.guardrail_id:
                     converse_kwargs["guardrailConfig"] = {
                         "guardrailIdentifier": self.config.guardrail_id,
@@ -269,11 +270,21 @@ class CustomerSupportAgent:
             ])
 
             if has_environment and has_steps:
-                # All 3 required fields present -> invoke create_bug_report tool
                 desc = latest_text if len(latest_text) > 10 else all_user_text[:100]
                 env = "Chrome on macOS" if "chrome" in all_user_text or "mac" in all_user_text else "Mobile Browser / iOS"
                 steps = "1. Navigate to page 2. Perform action 3. Error observed"
-                
+
+                if not self.config.allow_direct_ticket_creation:
+                    return [
+                        {
+                            "text": (
+                                "I have enough information to prepare an issue draft. Please review and "
+                                "confirm it before submission. "
+                                f"Description: {desc}; Steps: {steps}; Environment: {env}."
+                            )
+                        }
+                    ], "end_turn"
+
                 return [
                     {
                         "toolUse": {

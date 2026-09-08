@@ -1,10 +1,14 @@
 """Unit tests for bug report tool and Lambda handler."""
 
 import json
+from importlib import import_module
 
+import pytest
 from moto import mock_aws
 from support_service.tools.bug_report import BUG_REPORT_TOOL_SPEC, execute_bug_report_tool
 from support_service.tools.lambda_handler import lambda_handler
+
+handler_module = import_module("support_service.tools.lambda_handler")
 
 
 def test_tool_spec_structure():
@@ -90,3 +94,18 @@ def test_execute_bug_report_tool_local():
         res = execute_bug_report_tool(params)
         assert res.get("status") == "SUCCESS"
         assert "ticketId" in res
+
+
+def test_live_persistence_failure_is_not_reported_as_success(monkeypatch):
+    class BrokenTable:
+        def put_item(self, **_kwargs):
+            raise RuntimeError("database unavailable")
+
+    monkeypatch.setenv("AWS_MOCK_MODE", "false")
+    monkeypatch.setattr(handler_module, "get_dynamodb_table", lambda: BrokenTable())
+
+    with pytest.raises(RuntimeError, match="database unavailable"):
+        lambda_handler(
+            {"description": "Checkout froze", "stepsToReproduce": "Clicked pay",
+             "environment": "Chrome"}
+        )

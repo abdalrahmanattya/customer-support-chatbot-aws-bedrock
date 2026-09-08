@@ -56,6 +56,10 @@ class AgentConfig(BaseModel):
         default=30,
         description="Maximum turns retained in active conversation memory"
     )
+    allow_direct_ticket_creation: bool = Field(
+        default=False,
+        description="Legacy escape hatch; product flows require explicit draft confirmation.",
+    )
     lambda_tool_arn: str | None = Field(
         default_factory=lambda: os.environ.get("CREATE_BUG_REPORT_LAMBDA_ARN"),
         description="Optional ARN for remote Lambda execution"

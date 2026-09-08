@@ -18,12 +18,13 @@ answers, controlled escalation, and operator ticket handling on AWS.
 - DynamoDB-backed issue creation function
 - Configurable Bedrock Guardrails integration with local safety checks
 - Terminal client and a temporary local web client
+- Persistent session, queued chat, confirmation-gated ticket, and operator API
+  services with in-memory and DynamoDB adapters
 - Offline tests and a 22-case behavioral evaluation suite
 - CloudFormation templates for the existing experimental resources
 
-The React application, operator desk, persistent sessions, asynchronous
-processing, and complete disposable AWS deployment are planned and are not
-represented as finished features.
+The React application, visual operator desk, and complete disposable AWS
+deployment are planned and are not represented as finished features.
 
 ## Why it is useful
 
@@ -135,8 +136,10 @@ No AWS resources are currently deployed; all AWS resources in the cloud diagram 
 
 ## Limitations
 
-- Sessions currently live in one process and disappear when the server stops.
-- The temporary web client has no operator workflow or Cognito authentication.
+- The temporary web client still uses its legacy process-local session path;
+  the new persistent API is not wired into a browser interface yet.
+- Operator APIs expect Cognito-verified claims, but the user pool and visual
+  operator workflow are planned for later phases.
 - The current knowledge template does not provision a complete managed vector
   knowledge base.
 - Offline evaluation uses deterministic simulation and is not a model-quality

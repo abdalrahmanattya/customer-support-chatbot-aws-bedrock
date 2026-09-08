@@ -55,8 +55,8 @@ def test_agent_incomplete_bug_report_clarification():
     assert "steps" in response.text.lower() or "environment" in response.text.lower() or "browser" in response.text.lower()
 
 
-def test_agent_multi_turn_bug_report_resolution():
-    """Test end-to-end multi-turn bug report submission and tool invocation."""
+def test_agent_multi_turn_bug_report_prepares_confirmation():
+    """A complete report becomes a draft and is not submitted from chat."""
     with mock_aws():
         config = AgentConfig(mock_mode=True)
         agent = CustomerSupportAgent(config=config)
@@ -71,10 +71,9 @@ def test_agent_multi_turn_bug_report_resolution():
             "I am using Chrome on macOS. When I click 'Place Order' after entering my address, it fails.",
             session=session
         )
-        assert len(resp2.tool_calls) == 1
-        assert resp2.tool_calls[0].tool_name == "create_bug_report"
-        assert resp2.tool_calls[0].tool_result.get("status") == "SUCCESS"
-        assert "BUG-" in resp2.text
+        assert len(resp2.tool_calls) == 0
+        assert "draft" in resp2.text.lower()
+        assert "confirm" in resp2.text.lower()
 
 
 def test_agent_out_of_scope_escalation():

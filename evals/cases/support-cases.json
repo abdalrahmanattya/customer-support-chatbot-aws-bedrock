@@ -76,8 +76,8 @@
       "id": "bug-complete-01",
       "category": "bug_report",
       "prompt": "I found a bug on checkout: when I click 'Place Order' on Chrome on macOS Monterey, the page freezes on a spinner and nothing happens. Steps: 1. Add item to cart 2. Fill shipping address 3. Click Place Order.",
-      "expected": "Bug report ticket created with confirmation ticket ID provided to customer.",
-      "expected_tool": "create_bug_report"
+      "expected": "Assistant prepares a complete issue draft and asks the customer to confirm it.",
+      "keywords": ["draft", "confirm"]
     },
     {
       "id": "bug-incomplete-01",
