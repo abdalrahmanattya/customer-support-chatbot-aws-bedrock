@@ -11,3 +11,11 @@ Verification has three evidence levels:
 
 Only current, sanitized evidence belongs in this directory. Mock results must
 always be labeled as simulation.
+
+## Local interface evidence
+
+The image below was captured from the Phase 4 React application in explicit
+local demo mode. It demonstrates the responsive customer interface only; it is
+not evidence of an AWS deployment.
+
+![Local customer chat interface](customer-chat-local.png)

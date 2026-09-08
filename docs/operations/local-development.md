@@ -15,9 +15,13 @@ pytest
 ruff check backend evals
 cfn-lint infra/*.yaml
 ./scripts/run-eval.sh --mock
+npm install
+npm run web:build
+npm run web:test
+npm run web:e2e
 ```
 
-Run the temporary browser client with `./scripts/start-web.sh`, or run
+Run `npm run web:dev` for the browser application, or run
 `python -m support_service.cli --mock` for the terminal client.
 
 Generated evaluation JSONL is written to ignored `evals/results/`. AWS

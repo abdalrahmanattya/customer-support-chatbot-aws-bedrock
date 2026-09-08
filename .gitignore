@@ -49,7 +49,14 @@ yarn-error.log*
 .next/
 out/
 /apps/web/dist/
+/apps/web/test-results/
+/apps/web/playwright-report/
+/test-results/
+/playwright-report/
 /evals/results/
+*.tsbuildinfo
+/apps/web/*.js
+/apps/web/*.d.ts
 
 # Infrastructure / Terraform Artifacts
 .terraform/

@@ -17,14 +17,14 @@ answers, controlled escalation, and operator ticket handling on AWS.
 - Structured intent classification and issue extraction
 - DynamoDB-backed issue creation function
 - Configurable Bedrock Guardrails integration with local safety checks
-- Terminal client and a temporary local web client
+- Responsive React customer chat and authenticated operator desk
 - Persistent session, queued chat, confirmation-gated ticket, and operator API
   services with in-memory and DynamoDB adapters
 - Offline tests and a 22-case behavioral evaluation suite
 - CloudFormation templates for the existing experimental resources
 
-The React application, visual operator desk, and complete disposable AWS
-deployment are planned and are not represented as finished features.
+The browser application is complete for local demonstration. Its complete
+disposable AWS deployment is planned and is not represented as deployed.
 
 ## Why it is useful
 
@@ -38,10 +38,13 @@ idle AWS cost close to zero.
 
 ```mermaid
 flowchart LR
-    Customer[Customer] --> Legacy[Temporary local web client]
-    Developer[Developer] --> CLI[Command-line client]
-    Legacy --> Engine[Python support engine]
-    CLI --> Engine
+    Customer[Customer] --> React[React customer chat]
+    Operator[Operator] --> React
+    React --> Demo[Local demo adapter]
+    React -. AWS mode .-> API[Persistent HTTP API contract]
+    Developer[Developer] --> CLI[Python command-line client]
+    CLI --> Engine[Python support engine]
+    API --> Engine
     Engine --> Safety[Local checks / optional Bedrock Guardrail]
     Engine --> Retrieval[Local policy retrieval / optional Bedrock KB]
     Engine --> Converse[Amazon Bedrock Converse API]
@@ -74,8 +77,8 @@ flowchart TB
 ## Repository layout
 
 ```text
-apps/web/                   React customer and operator application (planned)
-backend/src/support_service Python service, CLI, and temporary web client
+apps/web/                   React customer and operator application
+backend/src/support_service Python service, Lambda handlers, and CLI
 backend/tests/              Backend unit and integration tests
 knowledge/policies/         Fictional store policy source
 knowledge/fixtures/         Synthetic demonstration data
@@ -83,7 +86,7 @@ evals/cases/                Behavioral and safety scenarios
 evals/runners/              Offline and live evaluation tools
 infra/                      AWS CloudFormation/SAM infrastructure
 scripts/                    Local and cloud lifecycle commands
-tests/e2e/                  Browser acceptance journeys (planned)
+tests/e2e/                  Browser acceptance journeys
 docs/                       Architecture, operations, and verification records
 ```
 
@@ -101,8 +104,14 @@ cfn-lint infra/*.yaml
 ./scripts/run-eval.sh --mock
 ```
 
-Start the temporary browser client with `./scripts/start-web.sh`, or run the
-terminal client with `python -m support_service.cli --mock`.
+Run the browser application in explicit local demo mode:
+
+```bash
+npm install
+npm run web:dev
+```
+
+Run the terminal client with `python -m support_service.cli --mock`.
 
 Mock mode is a local simulation. It is not evidence that AWS services or live
 persistence are working.
@@ -136,10 +145,10 @@ No AWS resources are currently deployed; all AWS resources in the cloud diagram 
 
 ## Limitations
 
-- The temporary web client still uses its legacy process-local session path;
-  the new persistent API is not wired into a browser interface yet.
-- Operator APIs expect Cognito-verified claims, but the user pool and visual
-  operator workflow are planned for later phases.
+- Local browser demo data is stored only in browser storage and is clearly
+  labeled as simulation; AWS mode uses the persistent HTTP API.
+- The operator interface includes Cognito PKCE sign-in, but its user pool and
+  deployed callback configuration are planned for the infrastructure phase.
 - The current knowledge template does not provision a complete managed vector
   knowledge base.
 - Offline evaluation uses deterministic simulation and is not a model-quality
