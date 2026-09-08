@@ -3,7 +3,7 @@
   "private": true,
   "workspaces": ["apps/web"],
   "devDependencies": {
-    "jsdom": "26.1.0"
+    "jsdom": "30.0.1"
   },
   "scripts": {
     "web:dev": "npm --workspace apps/web run dev",
