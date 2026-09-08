@@ -7,6 +7,7 @@ the `operators` group.
 
 | Method | Route | Result |
 |---|---|---|
+| `GET` | `/health` | Returns a dependency-light API process health response |
 | `POST` | `/sessions` | Creates a short-lived session and returns its bearer token once |
 | `POST` | `/sessions/{id}/messages` | Validates and queues chat; returns `202` and a request ID |
 | `GET` | `/sessions/{id}/messages/{requestId}` | Returns chat state and citations |

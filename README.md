@@ -1,5 +1,8 @@
 # Customer Support Assistant on AWS
 
+[![CI](https://github.com/abdalrahmanattya/customer-support-chatbot-aws-bedrock/actions/workflows/ci.yml/badge.svg)](https://github.com/abdalrahmanattya/customer-support-chatbot-aws-bedrock/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 An AWS-native support application for a fictional online store. The product is
 being developed as two connected experiences: a customer chat that answers
 policy questions and captures support issues, and an authenticated operations
@@ -174,6 +177,8 @@ otherwise. Planned resources are not deployment evidence.
 - [Verification policy](docs/verification/README.md)
 - [AWS readiness review](docs/verification/aws-readiness-2026-09-08.md)
 - [AWS lifecycle verification](docs/verification/aws-lifecycle-2026-09-08.md)
+- [Contributing](CONTRIBUTING.md)
+- [Security policy](SECURITY.md)
 
 ## License
 
