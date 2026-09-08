@@ -155,9 +155,7 @@ def worker_handler(event: dict[str, Any], _context: Any = None) -> dict[str, Any
     for record in event.get("Records", []):
         try:
             request_id = json.loads(record["body"])["requestId"]
-            job = backend.process_chat(request_id, agent)
-            if job.status == "FAILED":
-                raise RuntimeError(job.error)
+            backend.process_chat(request_id, agent)
         except Exception:
             failures.append({"itemIdentifier": record.get("messageId", "unknown")})
     return {"batchItemFailures": failures}

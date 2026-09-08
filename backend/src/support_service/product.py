@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import logging
 import secrets
 import threading
 import uuid
@@ -17,6 +18,8 @@ from pydantic import BaseModel, Field
 
 from support_service.core import CustomerSupportAgent
 from support_service.session import SessionMemory
+
+logger = logging.getLogger(__name__)
 
 
 class ProductError(Exception):
@@ -303,6 +306,7 @@ class SupportBackend:
             session.messages = memory.messages
             self.store.put("SESSION", session.session_id, session.model_dump(mode="json"))
         except Exception:
+            logger.exception("Chat request %s failed during agent processing", request_id)
             job.status = JobStatus.FAILED
             job.error = "The support assistant is temporarily unavailable."
         job.completed_at = self.now()

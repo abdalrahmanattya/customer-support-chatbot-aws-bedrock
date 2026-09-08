@@ -69,9 +69,9 @@ Teardown requires the exact stack name to reduce accidental deletion:
 ```
 
 The script empties both stack-owned S3 buckets, deletes and waits for the stack,
-and deletes only this environment's Lambda artifacts. The shared artifact bucket
-is retained because another environment may use it. Remove that bucket manually
-only after confirming it is empty and no environment depends on it.
+and deletes only this environment's Lambda artifacts. It deletes the bootstrap
+artifact bucket when that bucket is empty; if another environment still has
+artifacts, it preserves the shared bucket.
 
 ## GitHub Actions
 

@@ -84,3 +84,20 @@ def test_ticket_api_requires_explicit_confirmation(monkeypatch):
 
     assert ticket_response["statusCode"] == 201
     assert len(backend.list_tickets()) == 1
+
+
+def test_worker_acknowledges_safely_recorded_agent_failure(monkeypatch):
+    backend = SupportBackend(MemoryProductStore(), MemoryQueue())
+    session, token = backend.create_session()
+    job = backend.submit_chat(session.session_id, token, "Hello", "worker-failure")
+    monkeypatch.setattr(runtime, "build_backend", lambda: backend)
+    failed_job = job.model_copy(
+        update={"status": "FAILED", "error": "The support assistant is temporarily unavailable."}
+    )
+    monkeypatch.setattr(backend, "process_chat", lambda request_id, agent: failed_job)
+
+    response = runtime.worker_handler(
+        {"Records": [{"messageId": "message-1", "body": json.dumps({"requestId": job.request_id})}]}
+    )
+
+    assert response == {"batchItemFailures": []}

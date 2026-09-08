@@ -28,4 +28,15 @@ ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
 ARTIFACT_BUCKET="support-assistant-artifacts-${ACCOUNT_ID}-${REGION}"
 aws s3 rm "s3://${ARTIFACT_BUCKET}/${ENVIRONMENT}/" --recursive \
   --region "$REGION" --only-show-errors || true
-echo "Deleted ${STACK_NAME}; the shared artifact bucket was retained for other environments."
+remaining_objects="$(aws s3api list-objects-v2 --bucket "$ARTIFACT_BUCKET" --region "$REGION" \
+  --query 'length(Contents || `[]`)' --output text)"
+remaining_versions="$(aws s3api list-object-versions --bucket "$ARTIFACT_BUCKET" --region "$REGION" \
+  --query 'length(Versions || `[]`)' --output text 2>/dev/null || echo 1)"
+remaining_markers="$(aws s3api list-object-versions --bucket "$ARTIFACT_BUCKET" --region "$REGION" \
+  --query 'length(DeleteMarkers || `[]`)' --output text 2>/dev/null || echo 1)"
+if [[ "$remaining_objects" == "0" && "$remaining_versions" == "0" && "$remaining_markers" == "0" ]]; then
+  aws s3api delete-bucket --bucket "$ARTIFACT_BUCKET" --region "$REGION"
+  echo "Deleted ${STACK_NAME} and its empty artifact bucket."
+else
+  echo "Deleted ${STACK_NAME}; retained the artifact bucket because another environment uses it."
+fi

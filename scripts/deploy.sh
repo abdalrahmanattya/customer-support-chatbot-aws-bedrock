@@ -31,7 +31,7 @@ CODE_KEY="${ENVIRONMENT}/lambda-$(git -C "$ROOT_DIR" rev-parse --short HEAD)-$(d
 echo "Deploying ${STACK_NAME} in ${REGION} as ${CALLER_ARN}"
 echo "New sessions expire at ${EXPIRES_AT}; model is ${MODEL_ID}."
 
-if ! aws s3api head-bucket --bucket "$ARTIFACT_BUCKET" 2>/dev/null; then
+if ! aws s3api head-bucket --bucket "$ARTIFACT_BUCKET" >/dev/null 2>&1; then
   if [[ "$REGION" == "us-east-1" ]]; then
     aws s3api create-bucket --bucket "$ARTIFACT_BUCKET" --region "$REGION" >/dev/null
   else

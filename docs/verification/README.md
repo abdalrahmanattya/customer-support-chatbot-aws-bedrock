@@ -26,3 +26,10 @@ local demo mode. It demonstrates the responsive customer interface only; it is
 not evidence of an AWS deployment.
 
 ![Local customer chat interface](customer-chat-local.png)
+
+## Live AWS lifecycle evidence
+
+The [2026-09-08 AWS lifecycle record](aws-lifecycle-2026-09-08.md) documents a
+successful deploy, knowledge ingestion, paid grounded conversation, customer
+ticket workflow, Cognito-authenticated operator workflow, operational checks,
+teardown, and final absence inventory. The deployment is no longer active.

@@ -26,7 +26,8 @@ answers, controlled escalation, and operator ticket handling on AWS.
 - Deployment expiry, request limits, throttles, short retention, and alarms
 
 The application and disposable AWS deployment path are implemented and locally
-validated. No live AWS deployment is currently claimed.
+validated. A bounded live lifecycle has also passed and was torn down; no live
+AWS deployment is currently claimed.
 
 ## Why it is useful
 
@@ -139,9 +140,10 @@ name. See [AWS deployment and teardown](docs/operations/aws-deployment.md).
 ## Deployment status
 
 No current AWS deployment is claimed. The local product and infrastructure are
-implemented and tested. A read-only AWS inventory confirmed that active product
-resources are absent and identified two legacy orphans requiring a separate,
-exact cleanup approval before an authorized deployment.
+implemented and tested. A bounded AWS deploy, ingestion, grounded chat, ticket,
+authenticated operator, operational review, teardown, and absence check passed
+on 2026-09-08. The two legacy orphans identified during readiness were deleted
+after their absent dependencies were rechecked.
 
 All resources in the cloud diagram are implemented as infrastructure code but
 remain planned, not deployed, until a live verification record states
@@ -171,6 +173,7 @@ otherwise. Planned resources are not deployment evidence.
 - [Security, cost, and failure controls](docs/operations/security-and-cost.md)
 - [Verification policy](docs/verification/README.md)
 - [AWS readiness review](docs/verification/aws-readiness-2026-09-08.md)
+- [AWS lifecycle verification](docs/verification/aws-lifecycle-2026-09-08.md)
 
 ## License
 
