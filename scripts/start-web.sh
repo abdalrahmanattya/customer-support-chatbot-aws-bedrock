@@ -21,6 +21,14 @@ fi
 
 HOST="${1:-127.0.0.1}"
 PORT="${2:-8000}"
+MODE="${3:---mock}"
 
-echo "Starting Customer Support Web UI on http://${HOST}:${PORT}..."
-"${PYTHON_BIN}" "${ROOT_DIR}/src/web/server.py" --host "${HOST}" --port "${PORT}"
+if [[ "${MODE}" != "--mock" && "${MODE}" != "--live" ]]; then
+    echo "Mode must be --mock or --live." >&2
+    exit 2
+fi
+
+echo "Starting Customer Support Web UI on http://${HOST}:${PORT} (${MODE})..."
+PYTHONPATH="${ROOT_DIR}/backend/src${PYTHONPATH:+:${PYTHONPATH}}" \
+    "${PYTHON_BIN}" -m support_service.legacy_web \
+    --host "${HOST}" --port "${PORT}" "${MODE}"

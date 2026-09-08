@@ -35,7 +35,7 @@ fi
 echo ""
 echo "--> Deploying Tool Stack (${TOOL_STACK_NAME})..."
 aws cloudformation deploy \
-    --template-file "${ROOT_DIR}/infrastructure/tool-stack.yaml" \
+    --template-file "${ROOT_DIR}/infra/tool-stack.yaml" \
     --stack-name "${TOOL_STACK_NAME}" \
     --parameter-overrides EnvironmentName="${ENVIRONMENT}" \
     --capabilities CAPABILITY_NAMED_IAM \
@@ -45,7 +45,7 @@ aws cloudformation deploy \
 echo ""
 echo "--> Deploying Evaluation Stack (${EVAL_STACK_NAME})..."
 aws cloudformation deploy \
-    --template-file "${ROOT_DIR}/infrastructure/eval-stack.yaml" \
+    --template-file "${ROOT_DIR}/infra/eval-stack.yaml" \
     --stack-name "${EVAL_STACK_NAME}" \
     --parameter-overrides EnvironmentName="${ENVIRONMENT}" \
     --capabilities CAPABILITY_NAMED_IAM \

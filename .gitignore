@@ -4,7 +4,8 @@ AGY.md
 CLAUDE.md
 GEMINI.md
 CHANGELOG.md
-docs/
+/docs/project-journal.md
+/docs/decisions/ADR-001-bedrock-agentcore-modernization.md
 scripts/test-context-resume.sh
 scripts/refresh-credentials.sh
 project-starter/
@@ -47,6 +48,8 @@ yarn-debug.log*
 yarn-error.log*
 .next/
 out/
+/apps/web/dist/
+/evals/results/
 
 # Infrastructure / Terraform Artifacts
 .terraform/

@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "customer-support-chatbot-aws-bedrock"
-version = "1.0.0"
-description = "Customer Support Chatbot using Amazon Bedrock AgentCore, Python 3.12, and CloudFormation"
+version = "2.0.0-dev"
+description = "AWS-native customer support chat and ticket operations service"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -25,10 +25,16 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["backend/tests"]
 python_files = ["test_*.py"]
-pythonpath = ["."]
+pythonpath = ["backend/src"]
 addopts = "-v --tb=short"
+
+[tool.setuptools]
+package-dir = {"" = "backend/src"}
+
+[tool.setuptools.packages.find]
+where = ["backend/src"]
 
 [tool.ruff]
 line-length = 100

@@ -28,15 +28,15 @@ echo "=================================================================="
 
 # 1. Generate Bedrock Evaluation Dataset JSONL
 echo "--> Generating Evaluation Dataset JSONL..."
-"${PYTHON_BIN}" "${ROOT_DIR}/eval/generate_eval_dataset.py" "${MODE}" \
-    --tests-json "${ROOT_DIR}/eval/test_cases.json" \
-    --out-jsonl "${ROOT_DIR}/eval/eval_dataset.jsonl"
+"${PYTHON_BIN}" "${ROOT_DIR}/evals/runners/generate_eval_dataset.py" "${MODE}" \
+    --tests-json "${ROOT_DIR}/evals/cases/support-cases.json" \
+    --out-jsonl "${ROOT_DIR}/evals/results/evaluation.jsonl"
 
 # 2. Run Comprehensive Accuracy Evaluation
 echo ""
 echo "--> Running Evaluation Benchmark..."
-"${PYTHON_BIN}" "${ROOT_DIR}/eval/evaluate_agent.py" "${MODE}" \
-    --tests-file "${ROOT_DIR}/eval/test_cases.json"
+"${PYTHON_BIN}" "${ROOT_DIR}/evals/runners/evaluate_agent.py" "${MODE}" \
+    --tests-file "${ROOT_DIR}/evals/cases/support-cases.json"
 
 echo "=================================================================="
 echo " Evaluation finished successfully."
