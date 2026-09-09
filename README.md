@@ -133,7 +133,7 @@ after staff identity and group membership are verified.
 
 ## AWS cloud-resources architecture
 
-![AWS architecture for the Customer Support Assistant using official service icons for CloudFront, S3, API Gateway, Lambda, SQS, Bedrock, Cognito, DynamoDB, and CloudWatch](docs/diagrams/aws-services.svg)
+![AWS architecture for the Customer Support Assistant using official service icons for CloudFront, S3, API Gateway, Lambda, SQS, Bedrock, Cognito, DynamoDB, and CloudWatch](docs/diagrams/aws-services.png)
 
 The customer and operator applications are delivered through CloudFront from a
 private S3 bucket. Both call API Gateway, which sends requests to the API
