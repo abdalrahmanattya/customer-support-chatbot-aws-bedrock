@@ -98,7 +98,7 @@ docs/                       Architecture, operations, and verification records
 
 ## Run locally
 
-Python 3.12 or newer is required.
+Python 3.12 or newer and Node.js 24.15 or newer are required.
 
 ```bash
 python3 -m venv .venv
