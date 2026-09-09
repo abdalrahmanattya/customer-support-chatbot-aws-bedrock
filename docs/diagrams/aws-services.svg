@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Customer Support Assistant AWS architecture</title>
+  <desc id="desc">Customer and operator browsers use CloudFront and API Gateway. Lambda functions, SQS, Bedrock, Cognito, DynamoDB, S3, and CloudWatch provide the application services.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#506176"/></marker>
+    <style>
+      .bg{fill:#f7f9fc}.group{fill:#fff;stroke:#8795a8;stroke-width:2}.node{fill:#fff;stroke:#b7c1ce;stroke-width:1.5}.line{fill:none;stroke:#506176;stroke-width:2;marker-end:url(#arrow)}.dash{stroke-dasharray:7 6}.head{font:700 22px Arial,sans-serif;fill:#172033}.label{font:600 15px Arial,sans-serif;fill:#172033;text-anchor:middle}.small{font:13px Arial,sans-serif;fill:#445267;text-anchor:middle}.groupTitle{font:700 16px Arial,sans-serif;fill:#445267}
+    </style>
+  </defs>
+  <rect class="bg" width="1200" height="720"/>
+  <text class="head" x="42" y="42">Customer Support Assistant — AWS service flow</text>
+  <rect class="group" x="30" y="70" width="1140" height="620" rx="16"/>
+  <text class="groupTitle" x="52" y="102">Independent AWS environment created from CloudFormation</text>
+
+  <rect class="node" x="55" y="155" width="150" height="92" rx="12"/><text class="label" x="130" y="190">Customer</text><text class="small" x="130" y="215">web browser</text>
+  <rect class="node" x="55" y="430" width="150" height="92" rx="12"/><text class="label" x="130" y="465">Support staff</text><text class="small" x="130" y="490">operator browser</text>
+
+  <rect class="node" x="265" y="120" width="150" height="126" rx="12"/><image href="assets/cloudfront.svg" x="308" y="135" width="64" height="64"/><text class="label" x="340" y="220">CloudFront</text>
+  <rect class="node" x="475" y="120" width="150" height="126" rx="12"/><image href="assets/s3.svg" x="518" y="135" width="64" height="64"/><text class="label" x="550" y="220">S3 web files</text>
+  <path class="line" d="M205 185 H265"/><path class="line" d="M415 183 H475"/>
+
+  <rect class="node" x="265" y="300" width="150" height="126" rx="12"/><image href="assets/api-gateway.svg" x="308" y="315" width="64" height="64"/><text class="label" x="340" y="400">API Gateway</text>
+  <rect class="node" x="475" y="300" width="150" height="126" rx="12"/><image href="assets/lambda.svg" x="518" y="315" width="64" height="64"/><text class="label" x="550" y="400">API Lambda</text>
+  <path class="line" d="M205 205 C230 205 235 363 265 363"/><path class="line" d="M205 476 C235 476 235 383 265 383"/><path class="line" d="M415 363 H475"/>
+
+  <rect class="node" x="265" y="510" width="150" height="126" rx="12"/><image href="assets/cognito.svg" x="308" y="525" width="64" height="64"/><text class="label" x="340" y="610">Cognito sign-in</text>
+  <path class="line" d="M205 487 C230 487 235 573 265 573"/><path class="line dash" d="M340 510 V426"/>
+
+  <rect class="node" x="690" y="90" width="150" height="126" rx="12"/><image href="assets/dynamodb.svg" x="733" y="105" width="64" height="64"/><text class="label" x="765" y="190">DynamoDB</text>
+  <rect class="node" x="690" y="260" width="150" height="126" rx="12"/><image href="assets/sqs.svg" x="733" y="275" width="64" height="64"/><text class="label" x="765" y="360">SQS chat queue</text>
+  <rect class="node" x="690" y="430" width="150" height="126" rx="12"/><image href="assets/lambda.svg" x="733" y="445" width="64" height="64"/><text class="label" x="765" y="530">Worker Lambda</text>
+  <path class="line" d="M625 340 C650 340 655 153 690 153"/><path class="line" d="M625 363 H690"/><path class="line" d="M765 386 V430"/>
+
+  <rect class="node" x="915" y="90" width="210" height="126" rx="12"/><image href="assets/bedrock.svg" x="988" y="105" width="64" height="64"/><text class="label" x="1020" y="190">Bedrock + Guardrails</text>
+  <rect class="node" x="915" y="260" width="210" height="126" rx="12"/><image href="assets/s3.svg" x="988" y="275" width="64" height="64"/><text class="label" x="1020" y="357">Knowledge Base + S3</text><text class="small" x="1020" y="376">policy vectors</text>
+  <rect class="node" x="915" y="430" width="210" height="126" rx="12"/><image href="assets/cloudwatch.svg" x="988" y="445" width="64" height="64"/><text class="label" x="1020" y="530">CloudWatch</text>
+  <path class="line" d="M840 475 C875 475 875 153 915 153"/><path class="line" d="M840 493 C875 493 875 323 915 323"/><path class="line" d="M840 510 H915"/>
+
+  <text class="small" x="600" y="670">Status is stated in the README; the diagram describes the implemented environment, not a permanently running public service.</text>
+</svg>
