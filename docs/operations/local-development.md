@@ -3,6 +3,7 @@
 ## Prerequisites
 
 - Python 3.12 or newer
+- Node.js 24.15 or newer (use `nvm use` with the included `.nvmrc`)
 - AWS CLI v2 only for read-only checks or an explicitly approved deployment
 
 ## Setup and checks

@@ -3,10 +3,10 @@
 [![CI](https://github.com/abdalrahmanattya/customer-support-chatbot-aws-bedrock/actions/workflows/ci.yml/badge.svg)](https://github.com/abdalrahmanattya/customer-support-chatbot-aws-bedrock/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-An AWS-native support application for a fictional online store. The product is
-being developed as two connected experiences: a customer chat that answers
-policy questions and captures support issues, and an authenticated operations
-desk where staff can review and resolve submitted tickets.
+An AWS-native support application for a fictional online store. The product
+provides two connected experiences: a customer chat that answers policy
+questions and captures support issues, and an authenticated operations desk
+where staff can review and resolve submitted tickets.
 
 ## Purpose
 
@@ -36,7 +36,7 @@ AWS deployment is currently claimed.
 
 Customers can receive answers grounded in published store policies and turn a
 conversation into a trackable issue when automation is insufficient. Operators
-will get a small queue for progressing issues from open to resolved. The
+use a small queue to progress issues from open to resolved. The
 deployment is designed for short demonstrations and complete teardown, keeping
 idle AWS cost close to zero.
 
@@ -98,7 +98,7 @@ docs/                       Architecture, operations, and verification records
 
 ## Run locally
 
-Python 3.12 or newer is required.
+Python 3.12 or newer and Node.js 24.15 or newer are required.
 
 ```bash
 python3 -m venv .venv
@@ -160,8 +160,8 @@ otherwise. Planned resources are not deployment evidence.
   the deployment currently targets `us-east-1`.
 - Deployment expiry rejects new sessions but does not delete resources; teardown
   is still required to stop residual storage and distribution costs.
-- The stack and scripts are locally validated but have not yet completed a live
-  deploy/acceptance/teardown cycle in this modernization.
+- The live lifecycle was verified once on 2026-09-08 and then torn down; ongoing
+  AWS availability is not continuously tested or claimed.
 - Offline evaluation uses deterministic simulation and is not a model-quality
   or cloud-availability measurement.
 - The fictional product does not connect to commerce, payment, email, or order
